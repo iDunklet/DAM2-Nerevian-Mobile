@@ -1,4 +1,10 @@
 package com.example.nerevian
 
-class NerevianApp {
+import android.app.Application
+
+class NerevianApp : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+    }
 }
