@@ -49,4 +49,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun changeTrackStatus(id: Int, newStatusId: Int) {
+        // Usamos lifecycleScope igual que en el GET
+        lifecycleScope.launch {
+            try {
+                Log.d("NEREVIAN_DEBUG", "Cambiando estado de $id a $newStatusId...")
+
+                // Llamamos a la API a través de la instancia de Retrofit
+                val response = RetrofitInstance.api.changeTrackStatus(id, newStatusId)
+
+                if (response.isSuccessful) {
+                    val nuevoId = response.body()
+                    Log.d("NEREVIAN_DEBUG", "¡ÉXITO al cambiar! Nuevo estado: $nuevoId")
+                    Toast.makeText(this@MainActivity, "Actualizado al estado $nuevoId", Toast.LENGTH_SHORT).show()
+                } else {
+                    Log.e("NEREVIAN_DEBUG", "Error servidor al cambiar: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("NEREVIAN_DEBUG", "FALLO en PUT: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    private fun checkTrackStatus(id: Int) {
+        lifecycleScope.launch {
+            try {
+                Log.d("NEREVIAN_DEBUG", "Pidiendo estado del track $id...")
+                val response = RetrofitInstance.api.getTrackStatus(id)
+
+                if (response.isSuccessful) {
+                    val data = response.body()
+                    Log.d("NEREVIAN_DEBUG", "¡ÉXITO! Status: ${data?.status}")
+                    Toast.makeText(this@MainActivity, "Estado: ${data?.status}", Toast.LENGTH_LONG).show()
+                } else {
+                    Log.e("NEREVIAN_DEBUG", "Error servidor: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("NEREVIAN_DEBUG", "FALLO: ${e.localizedMessage}")
+            }
+        }
+    }
 }
