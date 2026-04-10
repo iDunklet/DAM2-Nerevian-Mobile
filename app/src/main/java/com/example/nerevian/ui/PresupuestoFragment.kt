@@ -14,20 +14,12 @@ class PresupuestoFragment : Fragment(R.layout.fragment_presupuesto) {
         super.onViewCreated(view, savedInstanceState)
 
 
+        //  listaDatos
         val listaDatos = listOf(
-            Presupuesto(
-                "COT-045",
-                "Shanghai",
-                "Valencia",
-                "FCL Marítimo",
-                "Expira: 30 Oct",
-                "4.500 €",
-                "FOB",
-                "Incluye flete marítimo, THC origen y gastos de documentación. Tránsito estimado: 32 días."
-            ),
-            Presupuesto("COT-046", "Valencia", "New York", "Aéreo Urgente", "Expira: 28 Oct", "2.850 €", "EXW", "Incluye flete aéreo y gastos en origen. Tránsito estimado: 3 días."),
-            Presupuesto("COT-047", "Castellón", "Dubai", "LCL Marítimo", "Expira: 05 Nov", "1.200 €", "CIF", "Incluye seguro y flete hasta puerto de destino."),
-            Presupuesto("COT-048", "Bilbao", "Rotterdam", "Terrestre FTL", "Expira: 10 Nov", "1.800 €", "DAP", "Entrega directa en almacén del cliente.")
+            Presupuesto("COT-045", "Shanghai", "Valencia", "FCL Marítimo", "Expira: 30 Oct", "4.500 €", "FOB", "Incluye flete marítimo, THC origen y gastos de documentación. Tránsito estimado: 32 días.", "Pendiente"), 
+            Presupuesto("COT-046", "Valencia", "New York", "Aéreo Urgente", "Expira: 28 Oct", "2.850 €", "EXW", "Incluye flete aéreo y gastos en origen.", "Pendiente"),
+            Presupuesto("COT-042", "Castellón", "Dubai", "LCL Marítimo", "Aceptado: 19 Oct", "3.100 €", "CIF", "Incluye seguro y flete hasta puerto.", "Aceptado"),
+            Presupuesto("COT-039", "Bilbao", "Rotterdam", "Terrestre FTL", "Rechazado: 10 Oct", "1.200 €", "DAP", "Entrega directa en almacén.", "Rechazado")
         )
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)

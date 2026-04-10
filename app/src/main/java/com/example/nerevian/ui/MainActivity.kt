@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            
+
             if (email == "cliente@nerevian.com" && password == "123456") {
                 Toast.makeText(this, "¡Bienvenido Cliente!", Toast.LENGTH_SHORT).show()
                 val intent = Intent(this, DashboardActivity::class.java)
