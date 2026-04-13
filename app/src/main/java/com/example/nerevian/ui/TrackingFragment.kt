@@ -1,60 +1,86 @@
 package com.example.nerevian.ui
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.nerevian.R
+import com.example.nerevian.core.model.incoterms.TrackingOrder
+import com.example.nerevian.core.model.incoterms.TrackingStatus
+import com.example.nerevian.data.network.TrackingApiService
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class TrackingFragment : Fragment(R.layout.fragment_tracking) {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [TrackingFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
-class TrackingFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private lateinit var timelineAdapter: TrackingStatusAdapter
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val rvShipments = view.findViewById<RecyclerView>(R.id.rvShipments)
+        val rvTimeline = view.findViewById<RecyclerView>(R.id.rvTimeline)
+        val tvEtaDate = view.findViewById<TextView>(R.id.tvEtaDate)
+        val tvGlobalStatus = view.findViewById<TextView>(R.id.tvGlobalStatus)
+        val tvContainerNumber = view.findViewById<TextView>(R.id.tvContainerNumber)
+
+        rvShipments.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        rvTimeline.layoutManager = LinearLayoutManager(requireContext())
+
+        // Retrofit
+        val myOrderList = listOf(
+            TrackingOrder("EXP-8821", "SHA -> VLC", "13 Oct 2023", "En Tránsito", "MSKU9988771"),
+            TrackingOrder("EXP-8822", "NGB -> BCN", "16 Oct 2023", "En Aduanas", "CMAU7766552"),
+            TrackingOrder("EXP-8823", "QIN -> MAD", "20 Oct 2023", "Pendiente", "MEDU3344553")
+        )
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:5125/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val apiService = retrofit.create(TrackingApiService::class.java)
+
+        timelineAdapter = TrackingStatusAdapter(emptyList<TrackingStatus>())
+        rvTimeline.adapter = timelineAdapter
+
+        updateTrackingDetails("EXP-8821", tvEtaDate, tvGlobalStatus, tvContainerNumber, apiService)
+
+        val orderAdapter = TrackingOrderAdapter(myOrderList) { selectedOrder ->
+            updateTrackingDetails(selectedOrder.referenceCode, tvEtaDate, tvGlobalStatus, tvContainerNumber, apiService)
         }
+        rvShipments.adapter = orderAdapter
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_tracking, container, false)
-    }
+    private fun updateTrackingDetails(
+        orderId: String,
+        tvEtaDate: TextView,
+        tvGlobalStatus: TextView,
+        tvContainerNumber: TextView,
+        apiService: TrackingApiService
+    ) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val response = apiService.getTrackingInfo(orderId)
+                Log.d("API_TEST", "¡Datos recibidos! ID: $orderId, Estado: ${response.globalStatus}")
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment TrackingFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            TrackingFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+                tvEtaDate.text = response.etaDate
+                tvGlobalStatus.text = response.globalStatus
+                tvContainerNumber.text = "Contenedor: ${response.containerNumber}"
+
+                if (response.history != null) {
+                    timelineAdapter.updateData(response.history)
+                } else {
+
+                    timelineAdapter.updateData(emptyList<TrackingStatus>())
                 }
+            } catch (e: Exception) {
+                Log.e("API_TEST", "Error en la solicitud: ${e.message}")
             }
+        }
     }
 }
