@@ -9,10 +9,10 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.nerevian.R
-import com.example.nerevian.core.model.business.presupuesto.Presupuesto
+import com.example.nerevian.core.model.business.budget.Budget
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
-class PresupuestoAdapter(private val presupuestos: List<Presupuesto>) :
+class PresupuestoAdapter(private val presupuestos: List<Budget>) :
     RecyclerView.Adapter<PresupuestoAdapter.PresupuestoViewHolder>() {
 
     class PresupuestoViewHolder(view: View) : RecyclerView.ViewHolder(view) {

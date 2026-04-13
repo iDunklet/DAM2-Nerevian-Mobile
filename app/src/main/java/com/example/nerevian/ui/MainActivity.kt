@@ -2,11 +2,15 @@ package com.example.nerevian.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.nerevian.R
+import com.example.nerevian.data.network.RetrofitInstance
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         val etPassword = findViewById<TextInputEditText>(R.id.etPassword)
         val btnLogin = findViewById<MaterialButton>(R.id.btnLogin)
         val btnForgotPassword = findViewById<MaterialButton>(R.id.btnForgotPassword)
-
+        testapi();
         btnForgotPassword?.setOnClickListener {
             Toast.makeText(this, "Contacta con el administrador", Toast.LENGTH_SHORT).show()
         }
@@ -48,6 +52,10 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun testapi() {
+        checkTrackStatus(1)
     }
 
     private fun changeTrackStatus(id: Int, newStatusId: Int) {

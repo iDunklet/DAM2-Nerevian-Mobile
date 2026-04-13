@@ -5,7 +5,7 @@ import com.example.nerevian.data.network.ApiService
 import kotlin.getValue
 import retrofit2.Retrofit
 object RetrofitInstance {
-    private const val BASE_URL = "http://10.0.2.2:5125/"
+    private const val BASE_URL = "http://simex03-nereviannetapi-ectkq2-71fb90-51-83-192-177.traefik.me/"
 
     val api: ApiService by lazy {
         Retrofit.Builder()

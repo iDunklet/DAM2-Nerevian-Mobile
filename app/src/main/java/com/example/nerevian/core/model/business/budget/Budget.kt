@@ -1,6 +1,6 @@
-package com.example.nerevian.core.model.business.presupuesto
+package com.example.nerevian.core.model.business.budget
 
-data class Presupuesto(
+data class Budget(
     val id: String,
     val origen: String,
     val destino: String,
