@@ -7,7 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.nerevian.R
-import com.example.nerevian.ui.game.GameActivity  // Importa la actividad del juego
+import com.example.nerevian.ui.game.GameFragment
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class InicioFragment : Fragment() {
 
@@ -23,8 +24,11 @@ class InicioFragment : Fragment() {
 
         val btnJugarTetris = view.findViewById<View>(R.id.mobile)
         btnJugarTetris.setOnClickListener {
-            val intent = Intent(requireContext(), GameActivity::class.java)
-            startActivity(intent)
+            val fragment = GameFragment()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)  // Para poder volver atrás
+                .commit()
         }
     }
 

@@ -9,7 +9,6 @@ import com.example.nerevian.R
 import com.example.nerevian.ui.game.GameFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-// ✅ Implementa AndroidFragmentApplication.Callbacks
 class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +19,7 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         val tvTopTitle = findViewById<TextView>(R.id.tvTopTitle)
 
         if (savedInstanceState == null) {
-            replaceFragment(InicioFragment()) // Ahora funciona
+            replaceFragment(InicioFragment())
         }
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -56,14 +55,20 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
     }
 
     private fun replaceFragment(fragment: Fragment) {
+        if (fragment is GameFragment) {
+            fragment.setOnExitListener(object : GameFragment.OnExitListener {
+                override fun onExit() {
+                    supportFragmentManager.popBackStack()
+                }
+            })
+        }
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
+            .addToBackStack(null)
             .commit()
     }
 
-    // ✅ Método obligatorio de la interfaz
     override fun exit() {
-        // Se llama cuando el juego quiere cerrarse (por ejemplo, con un botón de salida)
-        finish() // Cierra la actividad
+        finish()
     }
 }

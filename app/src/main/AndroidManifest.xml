@@ -4,9 +4,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Requerido para libGDX (OpenGL ES 2.0) -->
-    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-
     <application
         android:name=".NerevianApp"
         android:allowBackup="true"
@@ -19,19 +16,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Nerevian">
 
-        <!-- Solo una declaración de DashboardActivity -->
         <activity
             android:name=".ui.DashboardActivity"
-            android:exported="true"
-            android:hardwareAccelerated="true"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.Nerevian">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-    </application>
+        <activity android:name=".ui.MainActivity" />
 
+    </application>
 </manifest>
