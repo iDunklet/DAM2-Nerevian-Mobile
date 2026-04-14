@@ -25,7 +25,7 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_inicio -> {
-                    replaceFragment(GameFragment())
+                    replaceFragment(InicioFragment())
                     tvTopTitle.text = "NEREVIAN - TETRIS"
                     true
                 }
