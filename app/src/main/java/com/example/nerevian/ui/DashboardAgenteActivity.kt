@@ -7,32 +7,32 @@ import androidx.fragment.app.Fragment
 import com.example.nerevian.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class DashboardActivity : AppCompatActivity() {
+class DashboardAgenteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard)
+        setContentView(R.layout.activity_dashboardagente)
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        val tvTopTitle = findViewById<TextView>(R.id.tvTopTitle)
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationAgente)
+        val tvTopTitleAgente = findViewById<TextView>(R.id.tvTopTitleAgente)
 
 
         if (savedInstanceState == null) {
-            replaceFragment(InicioFragment())
+            replaceFragment(PedidosFragment())
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
 
-                R.id.nav_inicio -> {
-                    replaceFragment(InicioFragment())
-                    tvTopTitle.text = "NEREVIAN"
+                R.id.nav_pedidos -> {
+                    replaceFragment(PedidosFragment())
+                    tvTopTitleAgente.text = "Pedidos de Clientes"
                     true
                 }
 
                 R.id.nav_perfil -> {
-                    replaceFragment(PerfilFragment())
-                    tvTopTitle.text = "Mi Perfil"
+                    replaceFragment(PerfilAgenteFragment())
+                    tvTopTitleAgente.text = "Mi Perfil"
                     true
                 }
 
@@ -43,7 +43,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
+            .replace(R.id.fragment_containerAgente, fragment)
             .commit()
     }
 }

@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
 
             } else if (email == "agente@nerevian.com" && password == "123456") {
                 Toast.makeText(this, "¡Bienvenido Agente Comercial!", Toast.LENGTH_SHORT).show()
-                val intent = Intent(this, DashboardActivity::class.java)
+                val intent = Intent(this, DashboardAgenteActivity::class.java)
                 startActivity(intent)
                 finish()
 
