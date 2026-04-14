@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FDFBF7"
+    android:orientation="vertical">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="1dp"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="1dp">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@null"
+            android:hint="Buscar pedido o cliente..."
+            android:paddingHorizontal="16dp"
+            android:textColorHint="#9E9E9E"
+            android:textSize="14sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAgentePedidos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="20dp" />
+
+</LinearLayout>
