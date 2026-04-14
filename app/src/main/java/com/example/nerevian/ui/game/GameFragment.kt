@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication
-import com.example.nerevian.ui.game.logic.LogisticSimulator
+import com.example.nerevian.ui.game.logic.TetrisGame
 
 class GameFragment : AndroidFragmentApplication() {
 
@@ -14,6 +14,6 @@ class GameFragment : AndroidFragmentApplication() {
         config.useAccelerometer = false
         config.useCompass = false
 
-        return initializeForView(LogisticSimulator(), config)
+        return initializeForView(TetrisGame(), config)
     }
 }

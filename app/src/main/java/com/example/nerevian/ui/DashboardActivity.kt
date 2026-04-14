@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import com.badlogic.gdx.backends.android.AndroidFragmentApplication
 import com.example.nerevian.R
+import com.example.nerevian.ui.game.GameFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class DashboardActivity : AppCompatActivity() {
+// ✅ Implementa AndroidFragmentApplication.Callbacks
+class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,17 +19,15 @@ class DashboardActivity : AppCompatActivity() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val tvTopTitle = findViewById<TextView>(R.id.tvTopTitle)
 
-
         if (savedInstanceState == null) {
-            replaceFragment(InicioFragment())
+            replaceFragment(InicioFragment()) // Ahora funciona
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-
                 R.id.nav_inicio -> {
-                    replaceFragment(InicioFragment())
-                    tvTopTitle.text = "NEREVIAN"
+                    replaceFragment(GameFragment())
+                    tvTopTitle.text = "NEREVIAN - TETRIS"
                     true
                 }
                 R.id.nav_presupuestos -> {
@@ -49,7 +50,6 @@ class DashboardActivity : AppCompatActivity() {
                     tvTopTitle.text = "Mi Perfil"
                     true
                 }
-
                 else -> false
             }
         }
@@ -59,5 +59,11 @@ class DashboardActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+
+    // ✅ Método obligatorio de la interfaz
+    override fun exit() {
+        // Se llama cuando el juego quiere cerrarse (por ejemplo, con un botón de salida)
+        finish() // Cierra la actividad
     }
 }
