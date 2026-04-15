@@ -159,7 +159,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="La subida y descarga del DNI se realiza mediante conexión por sockets..."
+                android:text="La subida y descarga del DNI se realiza mediante conexión por sockets con encriptación AES."
                 android:textColor="#757575"
                 android:textSize="12sp" />
 
@@ -170,7 +170,7 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
-                    android:layout_width="0dp"
+                    android:id="@+id/btnDescargarDni"  android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
@@ -182,11 +182,12 @@
                     app:cornerRadius="8dp" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSubirDni"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
-                    android:text="Actualizar"
+                    android:text="Subir"
                     android:textColor="@android:color/white"
                     app:cornerRadius="8dp"
                     app:backgroundTint="#00796B" />
@@ -196,6 +197,7 @@
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCerrarSesion"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="32dp"

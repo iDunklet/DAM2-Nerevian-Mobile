@@ -29,6 +29,21 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
                     tvTopTitle.text = "NEREVIAN - TETRIS"
                     true
                 }
+                R.id.nav_presupuestos -> {
+                    replaceFragment(PresupuestoFragment())
+                    tvTopTitle.text = "Mis Presupuestos"
+                    true
+                }
+                R.id.nav_tracking -> {
+                    replaceFragment(TrackingFragment())
+                    tvTopTitle.text = "Seguimiento"
+                    true
+                }
+                R.id.nav_docs -> {
+                    replaceFragment(DocsFragment())
+                    tvTopTitle.text = "Documentos"
+                    true
+                }
 
                 R.id.nav_perfil -> {
                     replaceFragment(PerfilFragment())
