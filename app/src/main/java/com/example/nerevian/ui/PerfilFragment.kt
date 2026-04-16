@@ -2,42 +2,45 @@ package com.example.nerevian.ui
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.example.nerevian.R
+import com.example.nerevian.core.model.documents.DocumentUploadRequest
+import com.example.nerevian.data.network.RetrofitInstance
 import com.example.nerevian.ui.AES.AESHelper
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.*
 import java.io.File
 import java.net.Socket
-import android.net.Uri
-import android.provider.OpenableColumns
-import androidx.activity.result.contract.ActivityResultContracts
 
 class PerfilFragment : Fragment() {
-
 
     private val SERVER_IP = "10.0.2.2"
     private val SERVER_PORT = 8080
 
-    private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            val realFile = getFileFromUri(requireContext(), uri)
-            if (realFile != null) {
-                Toast.makeText(context, "Archivo seleccionado. Iniciando subida...", Toast.LENGTH_SHORT).show()
-                uploadDni(requireContext(), realFile)
-            } else {
-                Toast.makeText(context, "❌ Error al leer el archivo.", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Operación cancelada.", Toast.LENGTH_SHORT).show()
-        }
-    }
+    private val currentUserId = 1
 
+    private val filePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                val realFile = getFileFromUri(requireContext(), uri)
+                if (realFile != null) {
+                    Toast.makeText(context, "Archivo seleccionado. Iniciando subida...", Toast.LENGTH_SHORT).show()
+                    uploadDni(requireContext(), realFile)
+                } else {
+                    Toast.makeText(context, "❌ Error al leer el archivo.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "Operación cancelada.", Toast.LENGTH_SHORT).show()
+            }
+        }
 
     private fun getFileFromUri(context: Context, uri: Uri): File? {
         return try {
@@ -74,22 +77,18 @@ class PerfilFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_perfil, container, false)
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         val btnSubirDni = view.findViewById<MaterialButton>(R.id.btnSubirDni)
         val btnDescargarDni = view.findViewById<MaterialButton>(R.id.btnDescargarDni)
         val btnCerrarSesion = view.findViewById<MaterialButton>(R.id.btnCerrarSesion)
 
         btnSubirDni.setOnClickListener {
-
             filePickerLauncher.launch("*/*")
         }
 
         btnDescargarDni.setOnClickListener {
-
             val timeStamp = System.currentTimeMillis()
             val savePath = File(requireContext().filesDir, "dni_$timeStamp.jpg")
 
@@ -99,9 +98,7 @@ class PerfilFragment : Fragment() {
 
         btnCerrarSesion.setOnClickListener {
             val intent = Intent(requireContext(), MainActivity::class.java)
-
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-
             startActivity(intent)
         }
     }
@@ -109,30 +106,62 @@ class PerfilFragment : Fragment() {
     private fun uploadDni(context: Context, file: File) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val key = AESHelper.getOrCreateKey(context)
-                val encryptedBytes = AESHelper.encrypt(file.readBytes(), key)
-
                 val socket = Socket(SERVER_IP, SERVER_PORT)
-                val outputStream = socket.getOutputStream()
-
-                val dos = java.io.DataOutputStream(outputStream)
+                val dos = java.io.DataOutputStream(socket.getOutputStream())
+                val dis = java.io.DataInputStream(socket.getInputStream())
 
                 dos.write('U'.code)
-
                 dos.writeUTF(file.name)
 
-                dos.write(encryptedBytes)
+                val buffer = ByteArray(4096)
+                val inputStream = file.inputStream()
+
+                var bytesRead: Int
+
+                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    dos.write(buffer, 0, bytesRead)
+                }
+
+                inputStream.close()
 
                 dos.flush()
-                socket.close()
+                socket.shutdownOutput()
 
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "✅ ¡DNI subido con éxito!", Toast.LENGTH_LONG).show()
+                val status = dis.readUTF()
+                if (status == "OK") {
+                    val serverPath = dis.readUTF()
+                    val fileSize = dis.readLong()
+                    socket.close()
+
+                    val request = DocumentUploadRequest(
+                        fileName = file.name + ".aes",
+                        originalName = file.name,
+                        typeId = 1,
+                        path = serverPath,
+                        weight = fileSize.toString(),
+                        userId = 1
+                    )
+
+                    val response = RetrofitInstance.api.uploadDocumentInfo(request)
+
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful) {
+                            Toast.makeText(context, "✅ ¡Archivo cifrado correctamente y guardado en la base de datos!", Toast.LENGTH_LONG).show()
+                        } else {
+                            val errorCode = response.code()
+                            val errorBody = response.errorBody()?.string()
+
+                            println("🚨 Error API C#: $errorCode")
+                            println("🚨 Detalle: $errorBody")
+
+                            Toast.makeText(context, "❌ API fallo (código: $errorCode)", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "❌ Error al subir: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "❌ Error ocurrido: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -145,15 +174,14 @@ class PerfilFragment : Fragment() {
                 val dos = java.io.DataOutputStream(socket.getOutputStream())
 
                 dos.write('D'.code)
-                dos.writeUTF("dni_temp_upload.file")
+                dos.writeUTF("documento.file")
                 dos.flush()
+                socket.shutdownOutput()
 
                 val dis = java.io.DataInputStream(socket.getInputStream())
                 val status = dis.readUTF()
 
                 if (status == "OK") {
-
-
                     val bos = java.io.ByteArrayOutputStream()
                     val buffer = ByteArray(4096)
                     var len: Int
@@ -188,5 +216,4 @@ class PerfilFragment : Fragment() {
             }
         }
     }
-
 }

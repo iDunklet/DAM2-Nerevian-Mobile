@@ -1,5 +1,8 @@
 package com.example.nerevian.data.network
 import com.example.nerevian.core.model.business.request.StatusRequest
+import com.example.nerevian.core.model.documents.DocumentUploadRequest
+
+import com.example.nerevian.core.model.documents.GenericResponse
 import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
@@ -19,8 +22,14 @@ interface ApiService {
         @Path("id") id: Int,
         @Path("nuevoEstadoId") newStatusId: Int
     ): Response<Int>
+
     @POST("api/login") // Cambia "api/login" si la URL en Laravel es distinta
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+
+    @POST("api/documents")
+    suspend fun uploadDocumentInfo(
+        @Body request: DocumentUploadRequest
+    ): retrofit2.Response<GenericResponse>
 
 }
 
