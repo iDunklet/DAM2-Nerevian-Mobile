@@ -18,3 +18,7 @@ data class Document (
     var realeasedBy: User,
     var realesedDate: LocalDate
     )
+
+class GenericResponse {
+
+}
