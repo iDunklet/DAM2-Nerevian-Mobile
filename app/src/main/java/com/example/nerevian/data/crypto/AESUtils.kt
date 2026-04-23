@@ -4,10 +4,15 @@ import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
 object AESUtils {
+    /**
+     * Usamos el modo de transformación completo: Algoritmo/Modo/Padding.
+     * PKCS5Padding es esencial para evitar el error de "last block incomplete",
+     * ya que rellena automáticamente el bloque final del archivo para que sea múltiplo de 16 bytes.
+     */
+    private const val TRANSFORMATION = "AES/ECB/PKCS5Padding"
     private const val ALGORITHM = "AES"
 
-    // ⚠️ ATENCIÓN: Esta clave DEBE ser exactamente la misma que
-    // pusiste en la variable AES_KEY de Dokploy para que el espejo funcione.
+    // ⚠️ Esta clave de 16 caracteres (128 bits) debe coincidir en servidor y app.
     private const val SECRET_KEY = "DniSecretKey26!X"
 
     @Throws(Exception::class)
@@ -22,11 +27,18 @@ object AESUtils {
 
     @Throws(Exception::class)
     private fun getCipher(mode: Int): Cipher {
-        // En Kotlin es buena práctica especificar UTF_8 al pasar a bytes
+        // Convertimos el String de la clave a bytes usando UTF-8 para evitar caracteres extraños.
         val keyBytes = SECRET_KEY.toByteArray(Charsets.UTF_8)
+
+        // Creamos la especificación de la llave indicando que es para el algoritmo AES.
         val secretKey = SecretKeySpec(keyBytes, ALGORITHM)
-        val cipher = Cipher.getInstance(ALGORITHM)
+
+        // Obtenemos la instancia del Cipher con la transformación completa definida arriba.
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+
+        // Inicializamos el motor de cifrado/descifrado con la llave configurada.
         cipher.init(mode, secretKey)
+
         return cipher
     }
 }

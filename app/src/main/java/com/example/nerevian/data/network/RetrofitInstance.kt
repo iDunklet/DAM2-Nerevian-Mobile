@@ -5,113 +5,82 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.PrintWriter
+import java.io.*
 import java.net.Socket
 
 object RetrofitInstance {
 
-    // API Configuration Constants
     private const val BASE_URL_MAIN = "http://simex03-nereviannetapi-ectkq2-71fb90-51-83-192-177.traefik.me/"
     private const val BASE_URL_AUTH = "https://nerevian.xyz/"
 
-    // Socket Configuration Constants
-    // 10.0.2.2 is the localhost alias for the Android Emulator to reach the host machine
+    // Configuración de Socket (Asegúrate de que la IP sea correcta para tu entorno)
     private const val SOCKET_HOST = "10.0.2.2"
     private const val SOCKET_PORT = 8090
     private const val TAG = "SocketInstance"
 
-    // Lazy initialization for the main API client
-    val api: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_MAIN)
+    val api: ApiService by lazy { createRetrofit(BASE_URL_MAIN) }
+    val authApi: ApiService by lazy { createRetrofit(BASE_URL_AUTH) }
+
+    private fun createRetrofit(baseUrl: String): ApiService {
+        return Retrofit.Builder()
+            .baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
     }
 
-    // Lazy initialization for the authentication API client
-    val authApi: ApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL_AUTH)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ApiService::class.java)
-    }
+    /**
+     * Sube "ID|BASE64" al servidor de Sockets.
+     */
+    suspend fun uploadDataViaSocket(message: String): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            Log.d(TAG, "Conectando para SUBIDA...")
+            Socket(SOCKET_HOST, SOCKET_PORT).use { socket ->
+                socket.soTimeout = 15000
+                val writer = PrintWriter(BufferedWriter(OutputStreamWriter(socket.getOutputStream())), true)
+                val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
 
-    // Uploads the encrypted Base64 string to the local server via Sockets
-    suspend fun uploadDataViaSocket(data: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            var socket: Socket? = null
-            var isSuccess = false
+                // Enviamos el mensaje (ID|BASE64)
+                writer.println(message)
 
-            try {
-                Log.d(TAG, "Connecting to local host ($SOCKET_HOST:$SOCKET_PORT)...")
-                socket = Socket(SOCKET_HOST, SOCKET_PORT)
-
-                // Initialize output and input streams
-                val outStream = PrintWriter(socket.getOutputStream(), true)
-                val inStream = BufferedReader(InputStreamReader(socket.getInputStream()))
-
-                // Send the encrypted data to the server (println adds the expected newline)
-                outStream.println(data)
-
-                // Wait for the server acknowledgement
-                val response = inStream.readLine()
-                if (response == "OK") {
-                    Log.d(TAG, "Server confirmed file storage successfully!")
-                    isSuccess = true
-                } else {
-                    Log.e(TAG, "Server returned an error.")
-                }
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Socket connection error: ${e.message}")
-            } finally {
-                // Always close the socket to prevent memory leaks
-                socket?.close()
+                val response = reader.readLine()
+                response == "OK"
             }
-
-            isSuccess
+        }.getOrElse { e ->
+            Log.e(TAG, "Error en upload: ${e.message}")
+            false
         }
     }
 
-    // Requests the last uploaded encrypted DNI from the local server
-    suspend fun downloadDataViaSocket(): String {
-        return withContext(Dispatchers.IO) {
-            var socket: Socket? = null
-            var downloadedData = ""
+    /**
+     * Envía "DOWNLOAD|ID" y recibe el Base64 puro desde el servidor.
+     */
+    suspend fun downloadDataViaSocket(command: String): String = withContext(Dispatchers.IO) {
+        runCatching {
+            Log.d(TAG, "Conectando para DESCARGA con: $command")
+            Socket(SOCKET_HOST, SOCKET_PORT).use { socket ->
+                socket.soTimeout = 20000 // Mayor tiempo para recibir la imagen
 
-            try {
-                Log.d(TAG, "Requesting file download from $SOCKET_HOST:$SOCKET_PORT...")
-                socket = Socket(SOCKET_HOST, SOCKET_PORT)
+                val writer = PrintWriter(BufferedWriter(OutputStreamWriter(socket.getOutputStream())), true)
+                val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
 
-                // Initialize output and input streams
-                val outStream = PrintWriter(socket.getOutputStream(), true)
-                val inStream = BufferedReader(InputStreamReader(socket.getInputStream()))
+                // 1. Enviamos el comando solicitado (DOWNLOAD|ID)
+                writer.println(command)
 
-                // Send the download command trigger to the server
-                outStream.println("DOWNLOAD")
+                // 2. Leemos la respuesta (El servidor envía el Base64 en una sola línea larga)
+                val response = reader.readLine() ?: ""
 
-                // Read the server response containing the encrypted Base64 string
-                val response = inStream.readLine()
-
-                if (!response.isNullOrEmpty() && response != "ERROR") {
-                    Log.d(TAG, "Encrypted file successfully received from server.")
-                    downloadedData = response
+                if (response.startsWith("ERROR")) {
+                    Log.e(TAG, "Respuesta del servidor: $response")
+                    response // Devolvemos el error para manejarlo en la UI
                 } else {
-                    Log.e(TAG, "Failed to download file. Server returned empty or error.")
+                    Log.d(TAG, "Datos recibidos. Tamaño: ${response.length}")
+                    response
                 }
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Socket download error: ${e.message}")
-            } finally {
-                // Always close the socket to prevent memory leaks
-                socket?.close()
             }
-
-            downloadedData
+        }.getOrElse { e ->
+            Log.e(TAG, "Error en download: ${e.message}")
+            "ERROR: CONNECTION_FAILED"
         }
     }
 }
