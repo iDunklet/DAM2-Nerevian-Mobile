@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                     val token = response.body()!!.token
                     val usuarioLogueado = response.body()!!.user
 
-                    guardarToken(token)
+                    guardarToken(token, usuarioLogueado.id)
                     navigateToDashboard(usuarioLogueado.name)
                 } else {
                     val errorBody = response.errorBody()?.string()
@@ -109,9 +109,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Almacena el token JWT de forma persistente en el dispositivo
-    private fun guardarToken(token: String) {
+    private fun guardarToken(token: String,userId: Int) {
         val sharedPreferences = getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("auth_token", token).apply()
+        sharedPreferences.edit().putString("auth_token", token).putInt("user_id", userId).apply()
     }
 
     // --- METODOS DE TESTEO DE LA API DE TRACKING ---
