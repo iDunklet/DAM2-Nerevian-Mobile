@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication
 import com.example.nerevian.R
-import com.example.nerevian.ui.game.GameFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callbacks {
@@ -56,13 +55,7 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
     }
 
     private fun replaceFragment(fragment: Fragment) {
-        if (fragment is GameFragment) {
-            fragment.setOnExitListener(object : GameFragment.OnExitListener {
-                override fun onExit() {
-                    supportFragmentManager.popBackStack()
-                }
-            })
-        }
+
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)

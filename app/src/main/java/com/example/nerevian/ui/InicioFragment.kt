@@ -1,12 +1,13 @@
 package com.example.nerevian.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.nerevian.R
-import com.example.nerevian.ui.game.GameFragment
+import com.example.nerevian.ui.game.GameActivity
 
 class InicioFragment : Fragment() {
 
@@ -22,11 +23,9 @@ class InicioFragment : Fragment() {
 
         val btnJugarTetris = view.findViewById<View>(R.id.mobile)
         btnJugarTetris.setOnClickListener {
-            val fragment = GameFragment()
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)  // Para poder volver atrás
-                .commit()
+
+            val intent = Intent(requireContext(), GameActivity::class.java)
+            startActivity(intent)
         }
     }
 

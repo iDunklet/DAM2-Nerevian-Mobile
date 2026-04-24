@@ -24,6 +24,8 @@
         </activity>
         <activity android:name=".ui.DashboardActivity" />
         <activity android:name=".ui.DashboardAgenteActivity" />
+        <activity android:name=".ui.game.GameActivity" />
+
     </application>
 
 </manifest>
