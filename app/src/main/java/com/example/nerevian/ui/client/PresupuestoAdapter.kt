@@ -1,4 +1,4 @@
-package com.example.nerevian.ui
+package com.example.nerevian.ui.client
 
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nerevian.R
 import com.example.nerevian.core.model.business.budget.Budget
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.textfield.TextInputEditText
 
 class PresupuestoAdapter(private val presupuestos: List<Budget>) :
     RecyclerView.Adapter<PresupuestoAdapter.PresupuestoViewHolder>() {
@@ -112,7 +113,7 @@ class PresupuestoAdapter(private val presupuestos: List<Budget>) :
             val dialogView = LayoutInflater.from(holder.itemView.context).inflate(R.layout.layout_dialog_rechazar, null)
 
             val btnConfirmar = dialogView.findViewById<View>(R.id.btnConfirmarRechazo)
-            val etMotivo = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etMotivo)
+            val etMotivo = dialogView.findViewById<TextInputEditText>(R.id.etMotivo)
 
             btnConfirmar.setOnClickListener {
                 val motivo = etMotivo.text.toString()

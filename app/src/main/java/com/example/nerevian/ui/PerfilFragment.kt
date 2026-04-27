@@ -25,23 +25,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Fragmento de perfil de usuario. Muestra datos personales y permite subir/recuperar DNI encriptado.
+ * El rol Agente (roleId=4) no puede gestionar DNI.
+ * Modularización: mover lógica de encriptación/Socket a un repositorio dedicado.
+ */
 class PerfilFragment : Fragment() {
 
     private val TAG = "PerfilFragment_DEBUG"
     private var selectedImageUri: Uri? = null
 
-    // Vistas de DNI (Sección Protegida)
+    // Sección DNI (encriptación)
     private lateinit var ivDniPreview: ImageView
     private lateinit var btnSelectDni: MaterialButton
     private lateinit var btnUploadDni: MaterialButton
     private lateinit var btnRecoverDni: MaterialButton
 
-    // Vistas de Perfil
+    // Sección perfil público
     private lateinit var etPersonaContacto: TextInputEditText
     private lateinit var etEmailEmpresa: TextInputEditText
     private lateinit var etTelefonoEmpresa: TextInputEditText
     private lateinit var btnCerrarSesion: MaterialButton
 
+    // Lanzador para seleccionar imagen desde galería
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             selectedImageUri = it
@@ -60,48 +66,42 @@ class PerfilFragment : Fragment() {
 
         initViews(view)
 
-        // 1. Obtener Rol
         val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
         val roleId = sharedPrefs.getInt("role_id", 5)
 
-        // 2. Configurar Cerrar Sesión (Disponible para todos)
-        btnCerrarSesion.setOnClickListener {
-            cerrarSesion()
-        }
+        btnCerrarSesion.setOnClickListener { cerrarSesion() }
 
-        // 3. Lógica de DNI según Rol
         if (roleId == 4) {
-            bloquearSeccionDni()
+            bloquearSeccionDni()          // Agente no accede a DNI
         } else {
-            initDniListeners()
+            initDniListeners()             // Usuarios normales pueden subir/recuperar
         }
 
-        // 4. Cargar datos del servidor
         loadUserProfile()
     }
 
+    /** Inicializa las referencias a las vistas */
     private fun initViews(view: View) {
-        // Sección Perfil
         etPersonaContacto = view.findViewById(R.id.etPersonaContacto)
         etEmailEmpresa = view.findViewById(R.id.etEmailEmpresa)
         etTelefonoEmpresa = view.findViewById(R.id.etTelefonoEmpresa)
         btnCerrarSesion = view.findViewById(R.id.btnCerrarSesion)
 
-        // Sección DNI
         ivDniPreview = view.findViewById(R.id.ivPreviewDni)
         btnSelectDni = view.findViewById(R.id.btnSeleccionarDni)
         btnUploadDni = view.findViewById(R.id.btnSubirDni)
         btnRecoverDni = view.findViewById(R.id.btnRecuperarDni)
     }
 
+    /** Configura los botones de la sección DNI */
     private fun initDniListeners() {
         btnSelectDni.setOnClickListener { pickImageLauncher.launch("image/*") }
         btnUploadDni.setOnClickListener { processImageUpload() }
         btnRecoverDni.setOnClickListener { processImageRecovery() }
     }
 
+    /** Oculta la gestión de DNI para el rol Agente */
     private fun bloquearSeccionDni() {
-        // Ocultar botones de encriptación para el Agente
         btnSelectDni.visibility = View.GONE
         btnUploadDni.visibility = View.GONE
         btnRecoverDni.visibility = View.GONE
@@ -109,22 +109,21 @@ class PerfilFragment : Fragment() {
         Log.d(TAG, "DNI bloqueado para rol Agente")
     }
 
+    /** Limpia datos de sesión y redirige a login */
     private fun cerrarSesion() {
         val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
         sharedPrefs.edit().clear().apply()
-
         Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
-
         val intent = Intent(requireContext(), MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         requireActivity().finish()
     }
 
+    /** Encripta la imagen seleccionada y la envía mediante Socket */
     private fun processImageUpload() {
         val uri = selectedImageUri ?: return
         val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
-
         if (userId == -1) return
 
         btnUploadDni.isEnabled = false
@@ -146,6 +145,7 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    /** Recupera el DNI desde el Socket, lo desencripta y muestra la imagen */
     private fun processImageRecovery() {
         val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
         if (userId == -1) return
@@ -156,11 +156,9 @@ class PerfilFragment : Fragment() {
                 val rawData = withContext(Dispatchers.IO) {
                     RetrofitInstance.downloadDataViaSocket("DOWNLOAD|$userId")
                 }
-
                 if (rawData.isBlank() || rawData.startsWith("ERROR")) throw Exception("Error")
 
                 val cleanBase64 = rawData.replace("[^a-zA-Z0-9+/=]".toRegex(), "").trim()
-
                 val bitmap = withContext(Dispatchers.Default) {
                     val encryptedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
                     val decryptedBytes = AESUtils.getDecryptCipher().doFinal(encryptedBytes)
@@ -180,6 +178,7 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    /** Carga los datos del usuario desde la API y los muestra en los campos */
     private fun loadUserProfile() {
         val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
         if (userId == -1) return
@@ -200,5 +199,6 @@ class PerfilFragment : Fragment() {
         }
     }
 
+    /** Muestra un Toast breve */
     private fun showMessage(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 }

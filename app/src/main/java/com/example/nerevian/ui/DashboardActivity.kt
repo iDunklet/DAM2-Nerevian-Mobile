@@ -10,10 +10,16 @@ import com.example.nerevian.R
 import com.example.nerevian.ui.agent.OrderListFragment
 import com.example.nerevian.ui.client.DocsFragment
 import com.example.nerevian.ui.client.InicioFragment
+import com.example.nerevian.ui.client.PresupuestoFragment
 import com.example.nerevian.ui.client.TrackStatusFragment
 import com.example.nerevian.ui.game.GameFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
+/**
+ * Actividad principal con BottomNavigation que adapta el menú según el rol del usuario (Agent vs resto).
+ * Modularización: extraer lógica de roles a un ViewModel o manager, separar la navegación en un componente,
+ * y mover los títulos a recursos de strings. Considerar usar Navigation Component.
+ */
 class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callbacks {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,27 +29,20 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         val tvTopTitle = findViewById<TextView>(R.id.tvTopTitle)
 
-        // 1. Obtenemos el Rol desde SharedPreferences
+        // Obtiene el rol desde SharedPreferences (por defecto 5 = Client)
         val sharedPreferences = getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-
-        // Obtenemos el ID. Si por algo no existiera, ponemos 5 (Client) por defecto.
         val roleId = sharedPreferences.getInt("role_id", 5)
+        val isAgent = (roleId == 4)   // Solo rol 4 (Agent) tiene menú especial
 
-        // 2. Condición: SOLO si es el ID 4 (Agent) verá el menú de agente.
-        // Cualquier otro ID (1, 2, 3 o 5) entrará en el "else" (Menú Normal).
-        val isAgent = (roleId == 4)
-
+        // Configura el menú según el rol
         bottomNav.menu.clear()
-
         if (isAgent) {
-            // VISTA PARA AGENTE
             bottomNav.inflateMenu(R.menu.bottom_nav_agent)
             if (savedInstanceState == null) {
                 replaceFragment(OrderListFragment())
                 tvTopTitle.text = "Pedidos de Clientes"
             }
         } else {
-            // VISTA NORMAL (Para Admin, User, Operator y Client)
             bottomNav.inflateMenu(R.menu.bottom_nav_menu)
             if (savedInstanceState == null) {
                 replaceFragment(InicioFragment())
@@ -51,10 +50,10 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
             }
         }
 
-        // 3. Listener de clics (Mantenemos todos los IDs por si acaso)
+        // Maneja los clics del menú inferior
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                // IDs del Menú Normal
+                // Menú normal
                 R.id.nav_inicio -> {
                     replaceFragment(InicioFragment())
                     tvTopTitle.text = "NEREVIAN - TETRIS"
@@ -75,15 +74,13 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
                     tvTopTitle.text = "Documentos"
                     true
                 }
-
-                // ID del Menú Agente
+                // Menú agente
                 R.id.nav_pedidos -> {
                     replaceFragment(OrderListFragment())
                     tvTopTitle.text = "Pedidos de Clientes"
                     true
                 }
-
-                // ID compartido
+                // Compartido
                 R.id.nav_perfil -> {
                     replaceFragment(PerfilFragment())
                     tvTopTitle.text = "Mi Perfil"
@@ -94,6 +91,7 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         }
     }
 
+    /** Reemplaza el fragmento en el contenedor y lo añade al back stack */
     private fun replaceFragment(fragment: Fragment) {
         if (fragment is GameFragment) {
             fragment.setOnExitListener(object : GameFragment.OnExitListener {
@@ -104,13 +102,11 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         }
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
-            // Solo añadimos a la pila si queremos que el botón "Atrás" de Android devuelva al fragmento anterior
-            // Usualmente en la navegación base (BottomNav) no se suele hacer addToBackStack,
-            // pero lo mantengo igual que en tu código original para no romper tu flujo.
             .addToBackStack(null)
             .commit()
     }
 
+    /** Callback requerido por AndroidFragmentApplication para salir del juego LibGDX */
     override fun exit() {
         finish()
     }

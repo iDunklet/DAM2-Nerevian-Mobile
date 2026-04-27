@@ -14,9 +14,15 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
+/**
+ * Actividad de login y autenticación.
+ * Realiza login, obtiene perfil de usuario y guarda rol/token en SharedPreferences.
+ * Modularización: mover lógica de autenticación a un Repository/AuthViewModel,
+ * separar tests de API en una clase aparte, y unificar llamadas a Retrofit.
+ */
 class MainActivity : AppCompatActivity() {
 
-    // Declaracion de los componentes de la interfaz de usuario
+    // UI components
     private lateinit var etEmail: TextInputEditText
     private lateinit var etPassword: TextInputEditText
     private lateinit var btnLogin: MaterialButton
@@ -26,13 +32,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Inicializacion y configuracion estructurada
         initViews()
         setupListeners()
         runApiTests()
     }
 
-    // Vincula las variables con los elementos del XML
+    /** Vincula las variables con los elementos del XML */
     private fun initViews() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
@@ -40,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         btnForgotPassword = findViewById(R.id.btnForgotPassword)
     }
 
-    // Configura todos los eventos de interaccion del usuario
+    /** Configura todos los eventos de interacción del usuario */
     private fun setupListeners() {
         btnForgotPassword.setOnClickListener {
             Toast.makeText(this, "Contacta con el administrador", Toast.LENGTH_SHORT).show()
@@ -51,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Valida los datos introducidos antes de hacer la peticion
+    /** Valida los datos introducidos antes de hacer la petición */
     private fun handleLoginAttempt() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString().trim()
@@ -64,9 +69,7 @@ class MainActivity : AppCompatActivity() {
         performLogin(email, password)
     }
 
-    // Ejecuta la logica de autenticacion con la API
-    // Ejecuta la logica de autenticacion con la API
-    // Ejecuta la logica de autenticacion con la API
+    /** Ejecuta la lógica de autenticación con la API (login + obtención de perfil) */
     private fun performLogin(email: String, password: String) {
         setLoginButtonState(isLoading = true)
 
@@ -78,7 +81,7 @@ class MainActivity : AppCompatActivity() {
 
                 if (loginResponse.isSuccessful && loginResponse.body() != null) {
                     val token = loginResponse.body()!!.token
-                    val userId = loginResponse.body()!!.user.id // Aquí sacamos el ID (ej: 23)
+                    val userId = loginResponse.body()!!.user.id
 
                     // 2. SEGUNDA LLAMADA: OBTENER PERFIL CON ESE ID
                     fetchUserProfile(userId, token)
@@ -97,21 +100,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Nueva función para pedir el perfil antes de entrar al Dashboard
+    /** Obtiene el perfil del usuario y navega al dashboard */
     private suspend fun fetchUserProfile(userId: Int, token: String) {
         try {
-            // Nota: Usa RetrofitInstance.api o authApi según dónde hayas puesto el @GET
             val profileResponse = RetrofitInstance.api.getUserProfile(userId)
 
             if (profileResponse.isSuccessful && profileResponse.body() != null) {
                 val usuarioReal = profileResponse.body()!!
-
                 val rolDelUsuario = usuarioReal.roleId
                 val nombreUsuario = usuarioReal.name
 
                 Log.d("NEREVIAN_LOGIN", "¡Perfil obtenido! Nombre: $nombreUsuario, Rol: $rolDelUsuario")
 
-                // 3. GUARDAR DATOS Y NAVEGAR
                 guardarToken(token, userId, rolDelUsuario)
                 navigateToDashboard(nombreUsuario)
 
@@ -127,25 +127,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Almacena el token JWT de forma persistente en el dispositivo
-
-
-    // Controla el estado visual del boton de login para evitar multiples clicks
+    /** Controla el estado visual del botón de login para evitar múltiples clics */
     private fun setLoginButtonState(isLoading: Boolean) {
         btnLogin.isEnabled = !isLoading
         btnLogin.text = if (isLoading) "Iniciando..." else "Iniciar Sesión"
     }
 
-    // Gestiona la transicion a la pantalla principal de la aplicacion
+    /** Navega al Dashboard tras login exitoso */
     private fun navigateToDashboard(userName: String) {
         Toast.makeText(this, "¡Bienvenido $userName!", Toast.LENGTH_SHORT).show()
-
         val intent = Intent(this, DashboardActivity::class.java)
         startActivity(intent)
         finish()
     }
 
-    // Almacena el token JWT de forma persistente en el dispositivo
+    /** Almacena el token JWT de forma persistente en el dispositivo */
     private fun guardarToken(token: String, userId: Int, roleId: Int) {
         val sharedPreferences = getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
         sharedPreferences.edit()
@@ -154,21 +150,20 @@ class MainActivity : AppCompatActivity() {
             .putInt("role_id", roleId)
             .apply()
 
-        // ---> LOGS AÑADIDOS AQUÍ PARA CONFIRMAR QUÉ SE GUARDÓ <---
         Log.d("NEREVIAN_LOGIN", "========== GUARDADO EN SHAREDPREFERENCES ==========")
         Log.d("NEREVIAN_LOGIN", "User ID guardado: ${sharedPreferences.getInt("user_id", -1)}")
         Log.d("NEREVIAN_LOGIN", "Role ID guardado: ${sharedPreferences.getInt("role_id", -1)}")
         Log.d("NEREVIAN_LOGIN", "===================================================")
     }
 
-    // --- METODOS DE TESTEO DE LA API DE TRACKING ---
+    // --- MÉTODOS DE TESTEO DE LA API DE TRACKING ---
 
-    // Agrupa las llamadas de prueba a la API
+    /** Agrupa las llamadas de prueba a la API */
     private fun runApiTests() {
         checkTrackStatus(1)
     }
 
-    // Modifica el estado de un track especifico
+    /** Modifica el estado de un track específico */
     private fun changeTrackStatus(id: Int, newStatusId: Int) {
         lifecycleScope.launch {
             try {
@@ -188,7 +183,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Consulta el estado actual de un track
+    /** Consulta el estado actual de un track */
     private fun checkTrackStatus(id: Int) {
         lifecycleScope.launch {
             try {

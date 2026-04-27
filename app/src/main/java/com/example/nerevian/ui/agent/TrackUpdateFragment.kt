@@ -17,12 +17,17 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+/**
+ * Fragmento para actualizar el estado de un pedido (Track & Trace).
+ * Modularización: mover a módulo 'order', usar ViewModel + Repository,
+ * reemplazar Callback por corutinas y desacoplar lógica de selección.
+ */
 class TrackUpdateFragment : Fragment() {
 
     private var orderId: Int = -1
     private var selectedStatusId: Int = -1
 
-    // Referencias a las vistas
+    // Vistas principales
     private lateinit var tvReferencia: TextView
     private lateinit var tvEmpresa: TextView
     private lateinit var btnConfirmar: MaterialButton
@@ -39,22 +44,18 @@ class TrackUpdateFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflamos la vista de forma tradicional
         val view = inflater.inflate(R.layout.fragment_track_update, container, false)
-
         initViews(view)
-
         return view
     }
 
+    /** Inicializa vistas, setup de selección y botones */
     private fun initViews(view: View) {
-        // 1. Vincular textos y botones básicos
         tvReferencia = view.findViewById(R.id.tvReferencia)
         tvEmpresa = view.findViewById(R.id.tvEmpresa)
         btnConfirmar = view.findViewById(R.id.btnConfirmar)
         val btnBack = view.findViewById<ImageView>(R.id.btnBack)
 
-        // 2. Vincular las 7 tarjetas del Grid
         statusCards = listOf(
             view.findViewById(R.id.cardStatus1),
             view.findViewById(R.id.cardStatus2),
@@ -65,10 +66,7 @@ class TrackUpdateFragment : Fragment() {
             view.findViewById(R.id.cardStatus7)
         )
 
-        // 3. Configurar clics de las tarjetas
         setupSelectionLogic()
-
-        // 4. Configurar botón confirmar
         btnConfirmar.setOnClickListener {
             if (selectedStatusId == -1) {
                 Toast.makeText(requireContext(), "Selecciona un estado primero", Toast.LENGTH_SHORT).show()
@@ -76,40 +74,36 @@ class TrackUpdateFragment : Fragment() {
                 enviarActualizacion()
             }
         }
-
-        // 5. Configurar botón atrás
         btnBack.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
     }
 
+    /** Asigna listener a cada tarjeta de estado, guardando el ID seleccionado (índice+1) */
     private fun setupSelectionLogic() {
         statusCards.forEachIndexed { index, card ->
             card.setOnClickListener {
-                // El ID del estado será el índice + 1 (1 al 7)
                 selectedStatusId = index + 1
                 resaltarTarjetaSeleccionada(card)
             }
         }
     }
 
+    /** Resalta la tarjeta elegida y resetea las demás a estilo blanco */
     private fun resaltarTarjetaSeleccionada(selectedCard: MaterialCardView) {
-        // Resetear todas las tarjetas al estado original (Blanco)
         statusCards.forEach { card ->
             card.setCardBackgroundColor(Color.WHITE)
             card.strokeColor = Color.parseColor("#E0E0E0")
         }
-
-        // Aplicar estilo de selección a la elegida (Verde Nerevian)
         selectedCard.setCardBackgroundColor(Color.parseColor("#E6F2ED"))
         selectedCard.strokeColor = Color.parseColor("#0C3B3B")
     }
 
+    /** Envía la actualización al servidor usando Retrofit con Callback */
     private fun enviarActualizacion() {
         btnConfirmar.isEnabled = false
         btnConfirmar.text = "Actualizando..."
 
-        // Llamada a la API usando tu RetrofitInstance
         RetrofitInstance.api.changeStatus(orderId, selectedStatusId)
             .enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
@@ -129,6 +123,7 @@ class TrackUpdateFragment : Fragment() {
             })
     }
 
+    /** Restablece el botón después de un error */
     private fun resetBoton() {
         btnConfirmar.isEnabled = true
         btnConfirmar.text = "Confirmar Actualización"
@@ -137,12 +132,12 @@ class TrackUpdateFragment : Fragment() {
     companion object {
         private const val ARG_ORDER_ID = "order_id"
 
+        /** Factory method para crear una instancia con el ID del pedido */
         @JvmStatic
-        fun newInstance(orderId: Int) =
-            TrackUpdateFragment().apply {
-                arguments = Bundle().apply {
-                    putInt(ARG_ORDER_ID, orderId)
-                }
+        fun newInstance(orderId: Int) = TrackUpdateFragment().apply {
+            arguments = Bundle().apply {
+                putInt(ARG_ORDER_ID, orderId)
             }
+        }
     }
 }

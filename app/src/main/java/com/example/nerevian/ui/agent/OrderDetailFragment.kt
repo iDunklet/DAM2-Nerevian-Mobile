@@ -16,17 +16,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * Fragmento que muestra el detalle completo de un pedido (orden).
+ * Modularización: idealmente mover a módulo 'order' y usar ViewModel + Repository
+ * para desacoplar la lógica de red de la UI.
+ *
+ * @see OrderDetailResponse
+ */
 class OrderDetailFragment : Fragment() {
 
     private var orderId: Int = -1
 
-    // Vistas del Layout
+    // Vistas principales
     private lateinit var tvReferencia: TextView
     private lateinit var tvEstado: TextView
     private lateinit var tvCliente: TextView
     private lateinit var tvIncoterm: TextView
 
-    // Iconos de Documentación
+    // Iconos de documentación (BL, Factura, Packing, DUA)
     private lateinit var ivCheckBL: ImageView
     private lateinit var ivCheckFactura: ImageView
     private lateinit var ivCheckPacking: ImageView
@@ -48,8 +55,8 @@ class OrderDetailFragment : Fragment() {
         return view
     }
 
+    /** Inicializa todas las referencias a vistas y configura el botón back */
     private fun initViews(view: View) {
-        // Vinculación con los IDs exactos de tu XML
         tvReferencia = view.findViewById(R.id.tvReferencia)
         tvEstado = view.findViewById(R.id.tvEstadoDetalle)
         tvCliente = view.findViewById(R.id.tvClienteDetalle)
@@ -60,7 +67,6 @@ class OrderDetailFragment : Fragment() {
         ivCheckPacking = view.findViewById(R.id.ivCheckPacking)
         ivCheckDua = view.findViewById(R.id.ivCheckDua)
 
-        // Botón volver atrás
         view.findViewById<ImageView>(R.id.btnBack).setOnClickListener {
             requireActivity().supportFragmentManager.popBackStack()
         }
@@ -73,6 +79,7 @@ class OrderDetailFragment : Fragment() {
         }
     }
 
+    /** Obtiene los detalles desde la API usando corutinas (IO + Main) */
     private fun fetchOrderDetails(id: Int) {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -96,13 +103,13 @@ class OrderDetailFragment : Fragment() {
         }
     }
 
+    /** Actualiza la UI con los datos recibidos y los iconos de documentos */
     private fun updateUI(detail: OrderDetailResponse) {
         tvReferencia.text = detail.referencia
         tvEstado.text = detail.estadoNombre
         tvCliente.text = detail.clienteNombre
         tvIncoterm.text = detail.incoterm
 
-        // Usamos iconos nativos de Android y colores del sistema para evitar errores de recursos
         setDocumentStatus(ivCheckBL, detail.tieneBL)
         setDocumentStatus(ivCheckFactura, detail.tieneFactura)
         setDocumentStatus(ivCheckPacking, detail.tienePacking)
@@ -111,14 +118,13 @@ class OrderDetailFragment : Fragment() {
         Log.d("NEREVIAN_CHECK", "UI Actualizada para: ${detail.referencia}")
     }
 
+    /** Cambia el icono y color según disponibilidad del documento (check verde / X roja) */
     private fun setDocumentStatus(imageView: ImageView, isAvailable: Boolean) {
         if (isAvailable) {
-            // Icono de "Check" nativo en verde
             imageView.setImageResource(android.R.drawable.checkbox_on_background)
             imageView.setColorFilter(resources.getColor(android.R.color.holo_green_dark, null))
             imageView.alpha = 1.0f
         } else {
-            // Icono de "X" nativo en rojo
             imageView.setImageResource(android.R.drawable.ic_delete)
             imageView.setColorFilter(resources.getColor(android.R.color.holo_red_dark, null))
             imageView.alpha = 0.5f
@@ -127,12 +133,13 @@ class OrderDetailFragment : Fragment() {
 
     companion object {
         private const val ARG_ORDER_ID = "order_id"
+
+        /** Factory method para crear una instancia con el ID del pedido */
         @JvmStatic
-        fun newInstance(orderId: Int) =
-            OrderDetailFragment().apply {
-                arguments = Bundle().apply {
-                    putInt(ARG_ORDER_ID, orderId)
-                }
+        fun newInstance(orderId: Int) = OrderDetailFragment().apply {
+            arguments = Bundle().apply {
+                putInt(ARG_ORDER_ID, orderId)
             }
+        }
     }
 }

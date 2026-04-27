@@ -9,13 +9,21 @@ import com.example.nerevian.R
 import com.example.nerevian.core.model.operations.OrderListItem
 import com.google.android.material.button.MaterialButton
 
+/**
+ * Adaptador de pedidos para RecyclerView.
+ * Modularización: podría moverse a módulo 'order' y usar DiffUtil para mejor rendimiento.
+ *
+ * @param orders Lista de pedidos.
+ * @param onDetailsClick Callback al pulsar "Detalles" (recibe orderId).
+ * @param onUpdateClick Callback al pulsar "Actualizar" (recibe orderId).
+ */
 class OrderAdapter(
     private var orders: List<OrderListItem>,
-    // Opcional: Pasamos funciones lambda para manejar los clicks en la Activity/Fragment
     private val onDetailsClick: (Int) -> Unit = {},
     private val onUpdateClick: (Int) -> Unit = {}
 ) : RecyclerView.Adapter<OrderAdapter.OrderViewHolder>() {
 
+    /** ViewHolder con referencias a vistas del layout item_order */
     class OrderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvOrderRef: TextView = view.findViewById(R.id.tvOrderRef)
         val tvOrderStatus: TextView = view.findViewById(R.id.tvOrderStatus)
@@ -23,8 +31,6 @@ class OrderAdapter(
         val tvOrigin: TextView = view.findViewById(R.id.tvOrigin)
         val tvDestination: TextView = view.findViewById(R.id.tvDestination)
         val tvDate: TextView = view.findViewById(R.id.tvDate)
-
-        // Botones
         val btnDetalles: MaterialButton = view.findViewById(R.id.btnDetalles)
         val btnActualizar: MaterialButton = view.findViewById(R.id.btnActualizar)
     }
@@ -38,16 +44,13 @@ class OrderAdapter(
     override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
         val order = orders[position]
 
-        // 1. Textos directos
         holder.tvOrderRef.text = order.referenceCode
         holder.tvOrderStatus.text = order.status
         holder.tvClientName.text = order.clientName
-
-        // 2. Puertos (Si superan un tamaño podrías hacerles un .take(3) para que sean siglas)
         holder.tvOrigin.text = order.originPort
         holder.tvDestination.text = order.destinationPort
 
-        // 3. Fecha (Formateamos por si viene nula o muy larga desde el backend)
+        // Formato básico de fecha ETA
         val dateText = if (!order.eta.isNullOrEmpty() && order.eta.length >= 10) {
             "ETA: ${order.eta.substring(0, 10)}"
         } else {
@@ -55,20 +58,16 @@ class OrderAdapter(
         }
         holder.tvDate.text = dateText
 
-        // 4. Listeners de los botones
-        holder.btnDetalles.setOnClickListener {
-            onDetailsClick(order.id)
-        }
-
-        holder.btnActualizar.setOnClickListener {
-            onUpdateClick(order.id)
-        }
+        // Los callbacks desacoplan la lógica del adaptador
+        holder.btnDetalles.setOnClickListener { onDetailsClick(order.id) }
+        holder.btnActualizar.setOnClickListener { onUpdateClick(order.id) }
     }
 
     override fun getItemCount(): Int = orders.size
 
+    /** Actualiza los datos y refresca la vista completa */
     fun updateData(newOrders: List<OrderListItem>) {
         this.orders = newOrders
-        notifyDataSetChanged() // Refresca la lista completa
+        notifyDataSetChanged()
     }
 }

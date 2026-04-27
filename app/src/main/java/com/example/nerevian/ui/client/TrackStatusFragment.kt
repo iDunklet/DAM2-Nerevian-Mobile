@@ -18,10 +18,19 @@ import com.example.nerevian.ui.OrderSelectorAdapter
 import com.example.nerevian.ui.TimelineAdapter
 import kotlinx.coroutines.launch
 
+/**
+ * Fragmento para el seguimiento (tracking) de pedidos.
+ * Muestra selector horizontal de órdenes + timeline de estados + detalles.
+ * Modularización: mover a módulo 'tracking' o 'order', usar ViewModel,
+ * unificar con OrderDetailFragment (evitar duplicidad de lógica).
+ */
 class TrackStatusFragment : Fragment() {
 
+    // RecyclerViews
     private lateinit var rvOrderSelector: RecyclerView
     private lateinit var rvTimeline: RecyclerView
+
+    // Vistas de detalles
     private lateinit var tvEtaDate: TextView
     private lateinit var tvStatusBadge: TextView
     private lateinit var tvOriginPort: TextView
@@ -58,6 +67,7 @@ class TrackStatusFragment : Fragment() {
         loadAllOrders()
     }
 
+    /** Carga todas las órdenes y configura el selector horizontal */
     private fun loadAllOrders() {
         lifecycleScope.launch {
             try {
@@ -75,6 +85,7 @@ class TrackStatusFragment : Fragment() {
         }
     }
 
+    /** Obtiene detalles de un pedido específico por ID */
     private fun fetchOrderDetails(id: Int) {
         lifecycleScope.launch {
             try {
@@ -92,18 +103,16 @@ class TrackStatusFragment : Fragment() {
         }
     }
 
-    // --- AQUÍ ESTÁ LA FUNCIÓN QUE FALTABA ---
+    /** Actualiza la UI con los datos del pedido y el timeline */
     private fun updateUI(data: OrderDetailResponse) {
-        // Usamos los nombres de variables que definimos en la Data Class
         tvEtaDate.text = data.historial.firstOrNull()?.fecha ?: "Pendiente"
         tvStatusBadge.text = data.estadoNombre
-        tvOriginPort.text = data.clienteNombre // puerto_origen
-        tvDestinationPort.text = data.destinoNombre // puerto_destino
+        tvOriginPort.text = data.clienteNombre
+        tvDestinationPort.text = data.destinoNombre
         tvContainerId.text = data.numContenedor ?: "S/N"
         tvWeight.text = data.peso ?: "0 kg"
         tvVolume.text = data.volumen ?: "0 m³"
 
-        // Actualizamos el RecyclerView del historial
         rvTimeline.adapter = TimelineAdapter(data.historial)
 
         Log.d("NEREVIAN_DEBUG", "UI pintada con éxito para la referencia: ${data.referencia}")

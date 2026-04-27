@@ -10,15 +10,21 @@ import com.example.nerevian.R
 import com.example.nerevian.core.model.operations.OrderListItem
 import com.google.android.material.card.MaterialCardView
 
+/**
+ * Adaptador para selector horizontal de pedidos.
+ * Resalta el elemento seleccionado (opacidad) y notifica al listener.
+ * Modularización: mover a módulo 'order' o 'common', usar DiffUtil si hay muchos elementos.
+ */
 class OrderSelectorAdapter(
     private val orders: List<OrderListItem>,
     private val onOrderSelected: (Int) -> Unit
 ) : RecyclerView.Adapter<OrderSelectorAdapter.OrderViewHolder>() {
 
-    private var selectedPosition = 0
+    private var selectedPosition = 0   // Índice del pedido actualmente seleccionado
 
+    /** ViewHolder que contiene el card y los textos de cada ítem */
     class OrderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val card: MaterialCardView = view.findViewById(R.id.cardOrder) // Asegúrate de que el CardView en item_order_selector tenga este ID
+        val card: MaterialCardView = view.findViewById(R.id.cardOrder)
         val tvRef: TextView = view.findViewById(R.id.tvOrderRef)
         val tvRoute: TextView = view.findViewById(R.id.tvOrderRoute)
     }
@@ -33,7 +39,7 @@ class OrderSelectorAdapter(
         holder.tvRef.text = order.referenceCode
         holder.tvRoute.text = order.ruta ?: "---"
 
-        // Cambiar opacidad si está seleccionado
+        // Resalta el elemento seleccionado con opacidad
         holder.card.alpha = if (selectedPosition == position) 1.0f else 0.6f
 
         holder.itemView.setOnClickListener {
