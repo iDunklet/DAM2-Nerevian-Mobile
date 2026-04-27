@@ -1,4 +1,4 @@
-package com.example.nerevian.data.network
+package com.example.nerevian.core.model.others
 
 import com.example.nerevian.core.model.user.User
 import com.google.gson.annotations.SerializedName

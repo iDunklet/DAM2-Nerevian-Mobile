@@ -1,14 +1,18 @@
 package com.example.nerevian.ui
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
-import android.view.*
-import android.widget.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -17,20 +21,26 @@ import com.example.nerevian.data.crypto.AESUtils
 import com.example.nerevian.data.network.RetrofitInstance
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PerfilFragment : Fragment() {
 
     private val TAG = "PerfilFragment_DEBUG"
     private var selectedImageUri: Uri? = null
 
+    // Vistas de DNI (Sección Protegida)
     private lateinit var ivDniPreview: ImageView
     private lateinit var btnSelectDni: MaterialButton
     private lateinit var btnUploadDni: MaterialButton
     private lateinit var btnRecoverDni: MaterialButton
+
+    // Vistas de Perfil
     private lateinit var etPersonaContacto: TextInputEditText
     private lateinit var etEmailEmpresa: TextInputEditText
     private lateinit var etTelefonoEmpresa: TextInputEditText
+    private lateinit var btnCerrarSesion: MaterialButton
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
@@ -47,135 +57,148 @@ class PerfilFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         initViews(view)
-        initListeners()
+
+        // 1. Obtener Rol
+        val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
+        val roleId = sharedPrefs.getInt("role_id", 5)
+
+        // 2. Configurar Cerrar Sesión (Disponible para todos)
+        btnCerrarSesion.setOnClickListener {
+            cerrarSesion()
+        }
+
+        // 3. Lógica de DNI según Rol
+        if (roleId == 4) {
+            bloquearSeccionDni()
+        } else {
+            initDniListeners()
+        }
+
+        // 4. Cargar datos del servidor
         loadUserProfile()
     }
 
     private fun initViews(view: View) {
+        // Sección Perfil
+        etPersonaContacto = view.findViewById(R.id.etPersonaContacto)
+        etEmailEmpresa = view.findViewById(R.id.etEmailEmpresa)
+        etTelefonoEmpresa = view.findViewById(R.id.etTelefonoEmpresa)
+        btnCerrarSesion = view.findViewById(R.id.btnCerrarSesion)
+
+        // Sección DNI
         ivDniPreview = view.findViewById(R.id.ivPreviewDni)
         btnSelectDni = view.findViewById(R.id.btnSeleccionarDni)
         btnUploadDni = view.findViewById(R.id.btnSubirDni)
         btnRecoverDni = view.findViewById(R.id.btnRecuperarDni)
-        etPersonaContacto = view.findViewById(R.id.etPersonaContacto)
-        etEmailEmpresa = view.findViewById(R.id.etEmailEmpresa)
-        etTelefonoEmpresa = view.findViewById(R.id.etTelefonoEmpresa)
     }
 
-    private fun initListeners() {
+    private fun initDniListeners() {
         btnSelectDni.setOnClickListener { pickImageLauncher.launch("image/*") }
         btnUploadDni.setOnClickListener { processImageUpload() }
         btnRecoverDni.setOnClickListener { processImageRecovery() }
     }
 
+    private fun bloquearSeccionDni() {
+        // Ocultar botones de encriptación para el Agente
+        btnSelectDni.visibility = View.GONE
+        btnUploadDni.visibility = View.GONE
+        btnRecoverDni.visibility = View.GONE
+        ivDniPreview.visibility = View.GONE
+        Log.d(TAG, "DNI bloqueado para rol Agente")
+    }
+
+    private fun cerrarSesion() {
+        val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
+        sharedPrefs.edit().clear().apply()
+
+        Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
+
+        val intent = Intent(requireContext(), MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        requireActivity().finish()
+    }
+
     private fun processImageUpload() {
         val uri = selectedImageUri ?: return
+        val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
 
-        val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-        val userId = sharedPrefs.getInt("user_id", -1)
+        if (userId == -1) return
 
-        if (userId == -1) {
-            showMessage("Error: Inicie sesión de nuevo")
-            return
-        }
-
-        toggleButtons(false, "Subiendo...")
+        btnUploadDni.isEnabled = false
+        btnUploadDni.text = "Subiendo..."
 
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 runCatching {
                     val bytes = requireContext().contentResolver.openInputStream(uri)?.readBytes() ?: return@runCatching false
-
-                    // 1. Encriptar
                     val encrypted = AESUtils.getEncryptCipher().doFinal(bytes)
-
-                    // 2. Base64 (NO_WRAP es vital para Sockets)
                     val base64 = Base64.encodeToString(encrypted, Base64.NO_WRAP)
-
-                    // 3. Enviar con formato "ID|DATA"
                     RetrofitInstance.uploadDataViaSocket("$userId|$base64")
                 }.getOrDefault(false)
             }
 
-            toggleButtons(true, "Subir DNI Encriptado")
-            showMessage(if (result) "¡Guardado con éxito!" else "Error en el servidor")
+            btnUploadDni.isEnabled = true
+            btnUploadDni.text = "Subir DNI Encriptado"
+            showMessage(if (result) "Guardado correctamente" else "Error al subir")
         }
     }
 
     private fun processImageRecovery() {
-        val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-        val userId = sharedPrefs.getInt("user_id", -1)
-
-        if (userId == -1) {
-            showMessage("Inicie sesión para recuperar")
-            return
-        }
+        val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
+        if (userId == -1) return
 
         btnRecoverDni.isEnabled = false
         lifecycleScope.launch {
             try {
-                // 1. Pedir datos: "DOWNLOAD|20"
                 val rawData = withContext(Dispatchers.IO) {
                     RetrofitInstance.downloadDataViaSocket("DOWNLOAD|$userId")
                 }
 
-                if (rawData.isBlank()) throw Exception("Servidor vacío")
-                if (rawData.startsWith("ERROR")) throw Exception("Servidor dice: $rawData")
+                if (rawData.isBlank() || rawData.startsWith("ERROR")) throw Exception("Error")
 
-                // 2. Limpieza de caracteres no válidos en Base64
                 val cleanBase64 = rawData.replace("[^a-zA-Z0-9+/=]".toRegex(), "").trim()
 
                 val bitmap = withContext(Dispatchers.Default) {
-                    // 3. Decodificar Base64
                     val encryptedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
-
-                    // 4. Desencriptar AES
                     val decryptedBytes = AESUtils.getDecryptCipher().doFinal(encryptedBytes)
-
-                    // 5. Generar Bitmap
                     BitmapFactory.decodeByteArray(decryptedBytes, 0, decryptedBytes.size)
                 }
 
-                displayRecoveredImage(bitmap)
+                bitmap?.let {
+                    ivDniPreview.setImageBitmap(it)
+                    ivDniPreview.visibility = View.VISIBLE
+                    showMessage("DNI recuperado")
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error en recovery: ${e.message}")
-                showMessage("Fallo: ${e.localizedMessage}")
+                showMessage("No hay DNI en el servidor")
             } finally {
                 btnRecoverDni.isEnabled = true
             }
         }
     }
 
-    private fun displayRecoveredImage(bitmap: Bitmap?) {
-        if (bitmap != null) {
-            ivDniPreview.setImageBitmap(bitmap)
-            ivDniPreview.visibility = View.VISIBLE
-            showMessage("Imagen recuperada correctamente")
-        } else {
-            showMessage("Error: Los datos recuperados no son válidos")
-        }
-    }
-
-    private fun toggleButtons(enabled: Boolean, text: String) {
-        btnUploadDni.isEnabled = enabled
-        btnUploadDni.text = text
-    }
-
-    private fun showMessage(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-
     private fun loadUserProfile() {
-        val sharedPrefs = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-        val userId = sharedPrefs.getInt("user_id", -1)
+        val userId = requireContext().getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE).getInt("user_id", -1)
         if (userId == -1) return
 
         lifecycleScope.launch {
-            runCatching { RetrofitInstance.api.getUserProfile(userId) }.onSuccess { response ->
-                if (response.isSuccessful) response.body()?.let { user ->
-                    etPersonaContacto.setText("${user.name} ${user.surname}")
-                    etEmailEmpresa.setText(user.email)
-                    etTelefonoEmpresa.setText(user.phoneNumber ?: "N/A")
+            try {
+                val response = RetrofitInstance.api.getUserProfile(userId)
+                if (response.isSuccessful) {
+                    response.body()?.let { user ->
+                        etPersonaContacto.setText("${user.name} ${user.surname}")
+                        etEmailEmpresa.setText(user.email)
+                        etTelefonoEmpresa.setText(user.phoneNumber ?: "N/A")
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error perfil: ${e.message}")
             }
         }
     }
+
+    private fun showMessage(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 }

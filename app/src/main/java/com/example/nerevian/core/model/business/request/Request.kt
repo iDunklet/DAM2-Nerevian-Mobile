@@ -9,9 +9,8 @@ import com.example.nerevian.core.model.logistics.Port
 import com.example.nerevian.core.model.logistics.TransportType
 import com.example.nerevian.core.model.user.Client
 import com.example.nerevian.core.model.user.User
-import com.example.nerevian.core.model.utils.ValidationType
+import com.example.nerevian.core.model.others.ValidationType
 import java.time.LocalDate
-import java.util.Date
 
 data class Request (
     val id: Int,

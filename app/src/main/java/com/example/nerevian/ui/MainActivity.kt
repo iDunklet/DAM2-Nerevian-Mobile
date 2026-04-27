@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.nerevian.R
-import com.example.nerevian.data.network.LoginRequest
+import com.example.nerevian.core.model.others.LoginRequest
 import com.example.nerevian.data.network.RetrofitInstance
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -65,33 +65,70 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Ejecuta la logica de autenticacion con la API
+    // Ejecuta la logica de autenticacion con la API
+    // Ejecuta la logica de autenticacion con la API
     private fun performLogin(email: String, password: String) {
         setLoginButtonState(isLoading = true)
 
         lifecycleScope.launch {
             try {
+                // 1. PRIMERA LLAMADA: LOGIN
                 val request = LoginRequest(correu = email, contrasenya = password)
-                val response = RetrofitInstance.authApi.login(request)
+                val loginResponse = RetrofitInstance.authApi.login(request)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val token = response.body()!!.token
-                    val usuarioLogueado = response.body()!!.user
+                if (loginResponse.isSuccessful && loginResponse.body() != null) {
+                    val token = loginResponse.body()!!.token
+                    val userId = loginResponse.body()!!.user.id // Aquí sacamos el ID (ej: 23)
 
-                    guardarToken(token, usuarioLogueado.id)
-                    navigateToDashboard(usuarioLogueado.name)
+                    // 2. SEGUNDA LLAMADA: OBTENER PERFIL CON ESE ID
+                    fetchUserProfile(userId, token)
+
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    Log.e("NEREVIAN_DEBUG", "CÓDIGO: ${response.code()} | ERROR DEL SERVER: $errorBody")
+                    val errorBody = loginResponse.errorBody()?.string()
+                    Log.e("NEREVIAN_DEBUG", "CÓDIGO: ${loginResponse.code()} | ERROR LOGIN: $errorBody")
                     Toast.makeText(this@MainActivity, "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show()
+                    setLoginButtonState(isLoading = false)
                 }
             } catch (e: Exception) {
-                Log.e("NEREVIAN_DEBUG", "Error de conexión: ${e.localizedMessage}")
+                Log.e("NEREVIAN_DEBUG", "Error de conexión en login: ${e.localizedMessage}")
                 Toast.makeText(this@MainActivity, "Error de red. Revisa tu conexión.", Toast.LENGTH_SHORT).show()
-            } finally {
                 setLoginButtonState(isLoading = false)
             }
         }
     }
+
+    // Nueva función para pedir el perfil antes de entrar al Dashboard
+    private suspend fun fetchUserProfile(userId: Int, token: String) {
+        try {
+            // Nota: Usa RetrofitInstance.api o authApi según dónde hayas puesto el @GET
+            val profileResponse = RetrofitInstance.api.getUserProfile(userId)
+
+            if (profileResponse.isSuccessful && profileResponse.body() != null) {
+                val usuarioReal = profileResponse.body()!!
+
+                val rolDelUsuario = usuarioReal.roleId
+                val nombreUsuario = usuarioReal.name
+
+                Log.d("NEREVIAN_LOGIN", "¡Perfil obtenido! Nombre: $nombreUsuario, Rol: $rolDelUsuario")
+
+                // 3. GUARDAR DATOS Y NAVEGAR
+                guardarToken(token, userId, rolDelUsuario)
+                navigateToDashboard(nombreUsuario)
+
+            } else {
+                Log.e("NEREVIAN_DEBUG", "Error al obtener perfil: ${profileResponse.code()}")
+                Toast.makeText(this@MainActivity, "Error al cargar tu perfil", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("NEREVIAN_DEBUG", "Error de red al pedir perfil: ${e.localizedMessage}")
+            Toast.makeText(this@MainActivity, "Error de red al cargar el perfil.", Toast.LENGTH_SHORT).show()
+        } finally {
+            setLoginButtonState(isLoading = false)
+        }
+    }
+
+    // Almacena el token JWT de forma persistente en el dispositivo
+
 
     // Controla el estado visual del boton de login para evitar multiples clicks
     private fun setLoginButtonState(isLoading: Boolean) {
@@ -109,9 +146,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Almacena el token JWT de forma persistente en el dispositivo
-    private fun guardarToken(token: String,userId: Int) {
+    private fun guardarToken(token: String, userId: Int, roleId: Int) {
         val sharedPreferences = getSharedPreferences("NerevianPrefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit().putString("auth_token", token).putInt("user_id", userId).apply()
+        sharedPreferences.edit()
+            .putString("auth_token", token)
+            .putInt("user_id", userId)
+            .putInt("role_id", roleId)
+            .apply()
+
+        // ---> LOGS AÑADIDOS AQUÍ PARA CONFIRMAR QUÉ SE GUARDÓ <---
+        Log.d("NEREVIAN_LOGIN", "========== GUARDADO EN SHAREDPREFERENCES ==========")
+        Log.d("NEREVIAN_LOGIN", "User ID guardado: ${sharedPreferences.getInt("user_id", -1)}")
+        Log.d("NEREVIAN_LOGIN", "Role ID guardado: ${sharedPreferences.getInt("role_id", -1)}")
+        Log.d("NEREVIAN_LOGIN", "===================================================")
     }
 
     // --- METODOS DE TESTEO DE LA API DE TRACKING ---

@@ -1,4 +1,4 @@
-package com.example.nerevian.core.model.utils
+package com.example.nerevian.core.model.others
 
 import com.example.nerevian.core.model.business.request.Request
 import com.example.nerevian.core.model.incoterms.IncotermType
