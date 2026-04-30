@@ -12,7 +12,6 @@ object AESHelper {
     private const val PREFS_NAME = "DniSecurity"
     private const val KEY_NAME = "my_dni_key"
 
-    // 1. 生成并保存钥匙
     fun getOrCreateKey(context: Context): SecretKey {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val savedKey = prefs.getString(KEY_NAME, null)
@@ -30,14 +29,12 @@ object AESHelper {
         }
     }
 
-    // 2. 加密字节
     fun encrypt(data: ByteArray, key: SecretKey): ByteArray {
         val cipher = Cipher.getInstance(ALGO)
         cipher.init(Cipher.ENCRYPT_MODE, key)
         return cipher.doFinal(data)
     }
 
-    // 3. 解密字节
     fun decrypt(data: ByteArray, key: SecretKey): ByteArray {
         val cipher = Cipher.getInstance(ALGO)
         cipher.init(Cipher.DECRYPT_MODE, key)

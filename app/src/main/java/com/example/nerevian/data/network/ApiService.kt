@@ -1,4 +1,5 @@
 package com.example.nerevian.data.network
+import com.example.nerevian.core.model.business.budget.Budget
 import com.example.nerevian.core.model.business.request.StatusRequest
 import com.example.nerevian.core.model.documents.DocumentUploadRequest
 
@@ -30,6 +31,9 @@ interface ApiService {
     suspend fun uploadDocumentInfo(
         @Body request: DocumentUploadRequest
     ): retrofit2.Response<GenericResponse>
+
+    @GET("api/Presupuestos")
+    suspend fun getPresupuestos(): Response<List<Budget>>
 
 }
 

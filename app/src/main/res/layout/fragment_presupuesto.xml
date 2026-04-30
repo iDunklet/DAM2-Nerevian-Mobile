@@ -6,29 +6,6 @@
     android:background="#FFF9F0"
     android:padding="20dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/bg_alert_blue"
-        android:backgroundTint="#EDF4FF"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_marginBottom="20dp">
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_alerta"
-            android:layout_marginEnd="12dp"
-            android:layout_marginTop="2dp"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Revisa cada presupuesto con detalle. Para rechazar una propuesta, deberás proporcionar una justificación obligatoria."
-            android:textColor="#2D7FF9"
-            android:textSize="13sp"
-            android:lineSpacingExtra="4dp"/>
-    </LinearLayout>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"

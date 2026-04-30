@@ -2,31 +2,58 @@ package com.example.nerevian.ui
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.nerevian.R
 import com.example.nerevian.core.model.business.budget.Budget
+import com.example.nerevian.data.network.RetrofitInstance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PresupuestoFragment : Fragment(R.layout.fragment_presupuesto) {
+
+    private lateinit var adapter: PresupuestoAdapter
+    private lateinit var recyclerView: RecyclerView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
-        //  listaDatos
-        val listaDatos = listOf(
-            Budget("COT-045", "Shanghai", "Valencia", "FCL Marítimo", "Expira: 30 Oct", "4.500 €", "FOB", "Incluye flete marítimo, THC origen y gastos de documentación. Tránsito estimado: 32 días.", "Pendiente"),
-            Budget("COT-046", "Valencia", "New York", "Aéreo Urgente", "Expira: 28 Oct", "2.850 €", "EXW", "Incluye flete aéreo y gastos en origen.", "Pendiente"),
-            Budget("COT-042", "Castellón", "Dubai", "LCL Marítimo", "Aceptado: 19 Oct", "3.100 €", "CIF", "Incluye seguro y flete hasta puerto.", "Aceptado"),
-            Budget("COT-039", "Bilbao", "Rotterdam", "Terrestre FTL", "Rechazado: 10 Oct", "1.200 €", "DAP", "Entrega directa en almacén.", "Rechazado")
-        )
-
-        val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
-
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        val adapter = PresupuestoAdapter(listaDatos)
+        adapter = PresupuestoAdapter(emptyList())
         recyclerView.adapter = adapter
+
+        cargarDatosDesdeApi()
+    }
+
+    private fun cargarDatosDesdeApi() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val response = RetrofitInstance.api.getPresupuestos()
+
+                if (response.isSuccessful && response.body() != null) {
+                    val presupuestosReales = response.body()!!
+
+                    withContext(Dispatchers.Main) {
+                        adapter = PresupuestoAdapter(presupuestosReales)
+                        recyclerView.adapter = adapter
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Error de servidor: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error de red. ¿Está el backend encendido?", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 }

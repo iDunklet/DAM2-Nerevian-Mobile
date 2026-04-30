@@ -103,9 +103,11 @@ class TetrisGame : ApplicationAdapter(), InputProcessor {
     }
 
     private fun iniciarNuevoJuego() {
+        //determinar si llena toda pantalla
         for (i in 0 until BOARD_HEIGHT) grid[i].fill(0)
         score = 0
         linesClearedTotal = 0
+        //velocidad
         fallDelay = 0.6f
         gameState = State.RUNNING
         nextPiece = Tetromino.getRandom()
@@ -185,6 +187,7 @@ class TetrisGame : ApplicationAdapter(), InputProcessor {
         return fy
     }
 
+    //motor principal
     override fun render() {
         if (gameState == State.RUNNING && currentPiece != null) {
             fallTimer += Gdx.graphics.deltaTime
@@ -213,6 +216,23 @@ class TetrisGame : ApplicationAdapter(), InputProcessor {
 
         drawGameGrid()
         drawUI()
+
+        if (gameState == State.PAUSED) {
+            Gdx.gl.glEnable(GL20.GL_BLEND)
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
+
+            shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled)
+            shapeRenderer.color = com.badlogic.gdx.graphics.Color(0f, 0f, 0f, 0.7f)
+            shapeRenderer.rect(0f, 0f, WORLD_W, WORLD_H)
+            shapeRenderer.end()
+
+            spriteBatch.begin()
+            font.color = com.badlogic.gdx.graphics.Color.WHITE
+            font.data.setScale(0.14f)
+            drawCentered("PAUSED", WORLD_W / 2f, WORLD_H / 2f + 0.5f)
+            font.data.setScale(1f)
+            spriteBatch.end()
+        }
     }
 
     private fun drawGameGrid() {
@@ -284,6 +304,7 @@ class TetrisGame : ApplicationAdapter(), InputProcessor {
         shapeRenderer.end()
 
         spriteBatch.begin()
+        font.color = Color.WHITE
         font.data.setScale(0.045f)
 
         font.draw(spriteBatch, "NEXT BOX", 12.3f, 24.5f)
