@@ -1,5 +1,6 @@
 package com.example.nerevian.data.network
 import com.example.nerevian.core.model.business.budget.Budget
+import com.example.nerevian.core.model.business.budget.BudgetStatusUpdateRequest
 import com.example.nerevian.core.model.business.request.StatusRequest
 import com.example.nerevian.core.model.documents.DocumentUploadRequest
 
@@ -34,6 +35,12 @@ interface ApiService {
 
     @GET("api/Presupuestos")
     suspend fun getPresupuestos(): Response<List<Budget>>
+
+    @PUT("api/Presupuestos/{id}/estado")
+    suspend fun updatePresupuestoEstado(
+        @Path("id") id: String,
+        @Body request: BudgetStatusUpdateRequest
+    ): Response<GenericResponse>
 
 }
 

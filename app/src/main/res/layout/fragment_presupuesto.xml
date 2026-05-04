@@ -1,14 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#FFF9F0"
+    android:orientation="vertical"
     android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Presupuestos"
+        android:textColor="#101418"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:scrollbars="none">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupPresupuesto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:checkedChip="@id/chipTodos"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTodos"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Todos"
+                android:textColor="@color/presupuesto_filter_text"
+                app:chipBackgroundColor="@color/presupuesto_filter_bg" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPendiente"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pendiente"
+                android:textColor="@color/presupuesto_filter_text"
+                app:chipBackgroundColor="@color/presupuesto_filter_bg" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAceptado"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aceptados"
+                android:textColor="@color/presupuesto_filter_text"
+                app:chipBackgroundColor="@color/presupuesto_filter_bg" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipRechazado"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rechazados"
+                android:textColor="@color/presupuesto_filter_text"
+                app:chipBackgroundColor="@color/presupuesto_filter_bg" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/tvEmptyPresupuestos"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="No hay presupuestos para este filtro"
+        android:textColor="#6F7782"
+        android:textSize="15sp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingBottom="80dp" /> </LinearLayout>
+        android:paddingBottom="80dp" />
+</LinearLayout>

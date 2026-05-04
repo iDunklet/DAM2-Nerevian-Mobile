@@ -4,8 +4,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private const val BASE_URL_MIA = "http://simex03-nereviannetapi-ectkq2-71fb90-51-83-192-177.traefik.me/"
     //private const val BASE_URL_MIA = "http://10.0.2.2:5125/"
+    private const val BASE_URL_MIA = "http://simex03-nereviannetapi-ectkq2-71fb90-51-83-192-177.traefik.me/"
     private const val BASE_URL_AUTH = "https://nerevian.xyz/"
 
     val api: ApiService by lazy {
