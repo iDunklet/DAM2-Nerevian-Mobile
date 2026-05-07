@@ -63,11 +63,14 @@ dependencies {
     implementation("com.badlogicgames.gdx:gdx:$gdxVersion")
     implementation("com.badlogicgames.gdx:gdx-backend-android:$gdxVersion")
 
-    // 3. CAMBIADO: 'natives' en lugar de 'implementation' para los motores
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86")
     natives("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64")
+
+    // https
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }
 
 tasks.register("copyAndroidNatives") {

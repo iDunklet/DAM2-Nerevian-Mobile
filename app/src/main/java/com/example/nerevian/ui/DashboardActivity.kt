@@ -34,6 +34,19 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
         val roleId = sharedPreferences.getInt("role_id", 5)
         val isAgent = (roleId == 4)   // Solo rol 4 (Agent) tiene menú especial
 
+        val fabChat = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabChat)
+        fabChat.setOnClickListener {
+            replaceFragment(ChatBotFragment())
+            tvTopTitle.text = "Asistente Nerevian"
+
+            // Opcional: Deseleccionar los ítems del bottomNav para que no parezca
+            // que estás en otra sección principal
+            bottomNav.menu.setGroupCheckable(0, true, false)
+            for (i in 0 until bottomNav.menu.size()) {
+                bottomNav.menu.getItem(i).isChecked = false
+            }
+            bottomNav.menu.setGroupCheckable(0, true, true)
+        }
         // Configura el menú según el rol
         bottomNav.menu.clear()
         if (isAgent) {
