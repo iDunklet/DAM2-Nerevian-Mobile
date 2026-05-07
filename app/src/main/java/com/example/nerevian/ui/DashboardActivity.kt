@@ -19,13 +19,14 @@ class DashboardActivity : AppCompatActivity(), AndroidFragmentApplication.Callba
 
         if (savedInstanceState == null) {
             replaceFragment(InicioFragment())
+            tvTopTitle.text = "Inicio"
         }
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_inicio -> {
                     replaceFragment(InicioFragment())
-                    tvTopTitle.text = "NEREVIAN - TETRIS"
+                    tvTopTitle.text = "Inicio"
                     true
                 }
                 R.id.nav_presupuestos -> {

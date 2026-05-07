@@ -8,7 +8,6 @@ data class Budget(
     val expira: String,
     val precio: String,
     val incoterm: String,
-    val detalle: String,
     var estado: String,
     var isExpanded: Boolean = false
 )

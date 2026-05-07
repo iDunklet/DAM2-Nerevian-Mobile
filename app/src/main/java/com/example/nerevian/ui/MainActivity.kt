@@ -104,6 +104,7 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "¡Bienvenido $userName!", Toast.LENGTH_SHORT).show()
 
         val intent = Intent(this, DashboardActivity::class.java)
+        intent.putExtra("user_name", userName)
         startActivity(intent)
         finish()
     }
